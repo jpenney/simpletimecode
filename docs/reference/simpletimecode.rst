@@ -1,0 +1,5 @@
+simpletimecode
+=============================
+
+.. automodule:: simpletimecode
+    :members:
