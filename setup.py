@@ -3,17 +3,19 @@
 from __future__ import absolute_import, print_function
 
 import io
-import os
+# import os
 import re
 from glob import glob
 from os.path import basename
 from os.path import dirname
 from os.path import join
-from os.path import relpath
+# from os.path import relpath
 from os.path import splitext
+import sys
 
 from setuptools import find_packages
 from setuptools import setup
+
 
 def read(*names, **kwargs):
     return io.open(
@@ -21,13 +23,13 @@ def read(*names, **kwargs):
         encoding=kwargs.get('encoding', 'utf8')
     ).read()
 
-
-setup(
+setup_kwargs = dict(
     name='simpletimecode',
     version='0.1.0',
     license='BSD',
     description='Simple TimeCode provides a numeric type for dealing with timecodes (decimal accuracy and simple conversion to/from string)',
-    long_description='%s\n%s' % (read('README.rst'), re.sub(':obj:`~?(.*?)`', r'``\1``', read('CHANGELOG.rst'))),
+    long_description='%s\n%s' % (
+        read('README.rst'), re.sub(':obj:`~?(.*?)`', r'``\1``', read('CHANGELOG.rst'))),
     author='Jason Penney',
     author_email='jpenney@jczorkmid.net',
     url='https://github.com/jpenney/simpletimecode',
@@ -37,7 +39,8 @@ setup(
     include_package_data=True,
     zip_safe=False,
     classifiers=[
-        # complete classifier list: http://pypi.python.org/pypi?%3Aaction=list_classifiers
+        # complete classifier list:
+        # http://pypi.python.org/pypi?%3Aaction=list_classifiers
         'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: BSD License',
@@ -64,8 +67,13 @@ setup(
         # eg: 'rst': ['docutils>=0.11'],
     },
     entry_points={
-        'console_scripts': [
-            'simpletimecode = simpletimecode.__main__:main'
-        ]
+        # 'console_scripts': [
+        #     'simpletimecode = simpletimecode.__main__:main'
+        # ]
     },
 )
+
+if sys.version_info[0] == 2 and sys.version_info[1] < 7:
+    setup_kwargs['install_requires'].append('total-ordering')
+
+setup(**setup_kwargs)
