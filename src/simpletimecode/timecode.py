@@ -5,7 +5,7 @@ import numbers
 import operator
 import re
 
-from ._compat import Decimal, string_types, total_ordering, decimal_types
+from ._compat import Decimal, decimal_types, string_types, total_ordering
 
 
 @total_ordering

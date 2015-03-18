@@ -1,12 +1,14 @@
 from __future__ import absolute_import
 
-import pytest
-import sys
-from simpletimecode._compat import (
-    string_types, decimal_types, integer_types, Decimal)
 import itertools
-from simpletimecode import TimeCode
 import operator
+import sys
+
+import pytest
+
+from simpletimecode import TimeCode
+from simpletimecode._compat import (Decimal, decimal_types, integer_types,
+                                    string_types)
 
 from .test_conversions import TEST_COMBOS
 
@@ -71,7 +73,8 @@ def _test_unsupported_op_params():
     for oper_name in OPERATIONS:
         oper_args, oper_type = OPERATIONS[oper_name]
         if oper_type in unsupported_types:
-            yield pytest.mark.xfail((oper_type, oper_args, oper_name), raises=TypeError)
+            yield pytest.mark.xfail((oper_type, oper_args, oper_name),
+                                    raises=TypeError)
 
 
 def _test_supported_1op_params():
@@ -97,8 +100,7 @@ def _test_supported_1op_params():
 
 
 def _test_supported_2op_params():
-    math_skip_types = string_types + (float,)
-
+    skip_types = string_types + (float,)
     ops = (
         (oper_type, oper_args, oper_name)
         for (oper_name, (oper_args, oper_type))
@@ -106,14 +108,17 @@ def _test_supported_2op_params():
         if oper_args != '1op' and oper_type not in ('bitwise', 'sequence'))
     for ((oper_type, oper_args, oper_name), (val1, val2)) in itertools.product(
             ops, VALUES_2OP):
+        if (isinstance(val1, skip_types) or
+                isinstance(val2, skip_types)):
+            continue
         xfail = False
         if oper_type == 'math':
-            if (isinstance(val1, math_skip_types) or
-                    isinstance(val2, math_skip_types)):
-                continue
+
             if ('pow' in oper_name and val1 == val2 and Decimal(val1) == 0):
                 xfail = True
-
+        if oper_type == 'logic' and oper_name.startswith('is_'):
+            # TODO: test 'is_' / 'is_not' separately
+            continue
         try:
             oper = getattr(operator, oper_name)
             dummy = oper(val1, val2)
@@ -154,7 +159,8 @@ def _test_mixed_math_params():
             pass
 
 
-@pytest.mark.parametrize("oper_type, oper_args, oper_name", _test_unsupported_op_params())
+@pytest.mark.parametrize(
+    "oper_type, oper_args, oper_name", _test_unsupported_op_params())
 def test_unsupported_op(oper_type, oper_args, oper_name):
     dummy = oper_type
     oper = getattr(operator, oper_name)
@@ -171,8 +177,7 @@ def test_supported_1op(oper_type, oper_name, val):
     item = TimeCode(val)
     orig_result = oper(val)
     tc_result = oper(item)
-    assert(
-        orig_result == tc_result,
+    assert orig_result == tc_result, (
         "operator.%(oper_name)s(%(val)r) => %(orig_result)r != "
         "operator.%(oper_name)s(%(item)r) => %(tc_result)r" % dict(
             oper_name=oper_name, val=val, item=item,
@@ -205,9 +210,9 @@ def test_supported_2op(oper_type, oper_name, val1, val2):
                         oper_name=oper_name, tc1=tc1, tc2=tc2,
                         tc_result=tc_result, val1=val1, val2=val2,
                         orig_result=orig_result, tc_comp=tc_comp))
-            except Exception:
-                msg = None
-            assert(tc_result == tc_comp, msg)
+            except Exception as err:
+                msg = "error building message: %s" % err
+            assert tc_result == tc_comp, msg
         else:
             try:
                 msg = (
@@ -220,17 +225,29 @@ def test_supported_2op(oper_type, oper_name, val1, val2):
                         oper_name=oper_name, tc1=tc1, tc2=tc2,
                         tc_result=tc_result, val1=val1, val2=val2,
                         orig_result=orig_result, tc_comp=tc_comp))
-            except Exception:
-                msg = None
-            assert(str(tc_result) == str(tc_comp), msg)
+            except Exception as err:
+                msg = "error building message: %s" % err
+            assert str(tc_result) == str(tc_comp), msg
 
     elif oper_type == 'logic':
         orig_result = oper(val1, val2)
-        assert(
-            oper(TimeCode(val1), TimeCode(val2)) == orig_result,
-            ("operator.%(oper)s(TimeCode(%(val1)r), TimeCode(%(val2)r)) "
-             "!= operator.%(oper)s(%(val1)r, %(val2)r)") % dict(
-                oper=oper, val1=val1, val2=val2))
+        tc1 = TimeCode(val1)
+        tc2 = TimeCode(val2)
+        tc_result = oper(tc1, tc2)
+        try:
+            msg = (
+                "operator.%(oper_name)s(%(tc1)r, %(tc2)r)) => "
+                "operator.%(oper_name)s(%(tc1_sec)r, %(tc2_sec)r)) => "
+                "%(tc_result)r != "
+                "operator.%(oper_name)s(%(val1)r, %(val2)r) => "
+                "%(orig_result)r")
+            msg = msg % dict(
+                oper_name=oper_name, val1=val1, val2=val2, tc1=tc1, tc2=tc2,
+                orig_result=orig_result, tc_result=tc_result,
+                tc1_sec=tc1.as_seconds(), tc2_sec=tc2.as_seconds())
+        except Exception as err:
+            msg = "error building message: %s" % err
+        assert tc_result == orig_result, msg
 
     else:
         assert False, "unexpected oper_type=%s" % oper_type

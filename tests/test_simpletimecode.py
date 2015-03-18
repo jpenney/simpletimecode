@@ -1,7 +1,7 @@
+import math
+
 from simpletimecode import TimeCode
 from simpletimecode._compat import Decimal
-
-import math
 
 
 def test_timecode():

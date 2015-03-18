@@ -1,13 +1,14 @@
 from __future__ import absolute_import
 
+import itertools
 import math
+import operator
+import sys
+
+import pytest
 
 from simpletimecode import TimeCode
 from simpletimecode._compat import Decimal
-import itertools
-import pytest
-import sys
-import operator
 
 VALS = (1, 1.159007, Decimal('1.815'), sys.maxsize + 1)
 

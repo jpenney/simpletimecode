@@ -1,12 +1,14 @@
 from __future__ import absolute_import
 
-import pytest
-import sys
-from simpletimecode._compat import (
-    string_types, decimal_types, integer_types, Decimal)
 import itertools
-from simpletimecode import TimeCode
 import re
+import sys
+
+import pytest
+
+from simpletimecode import TimeCode
+from simpletimecode._compat import (Decimal, decimal_types, integer_types,
+                                    string_types)
 
 
 def _iter_type_value(combos):
@@ -61,7 +63,8 @@ def test_roundtrip(typ, orig, val):
     assert typ(TimeCode(val)) == val
 
 
-@pytest.mark.parametrize("typ, val", set((typ, val) for (typ, dummy, val) in TEST_COMBOS))
+@pytest.mark.parametrize("typ, val", set((typ, val)
+                                         for (typ, dummy, val) in TEST_COMBOS))
 def test_as_seconds(typ, val):
     assert TimeCode(val).as_seconds() == Decimal('%s' % val)
 
