@@ -5,7 +5,7 @@ import numbers
 import operator
 import re
 
-from ._compat import Decimal, string_types, total_ordering
+from ._compat import Decimal, string_types, total_ordering, decimal_types
 
 
 @total_ordering
@@ -17,8 +17,8 @@ class TimeCode(numbers.Real):
 
     def __init__(self, num=0):
         super(TimeCode, self).__init__()
-        if isinstance(num, Decimal):
-            self._seconds = num
+        if isinstance(num, decimal_types):
+            self._seconds = Decimal(num.as_tuple())
         else:
             self._seconds = self._convert_other(num)._seconds
 
@@ -28,6 +28,7 @@ class TimeCode(numbers.Real):
         sign = 1
         if tstamp[0] == '-':
             sign = -1
+            tstamp = tstamp[1:]
         if cls.TS_RE.match(tstamp):
             (hours, mins, secs) = (([0] * 3) + tstamp.split(':'))[-3:]
             return cls((((int(hours) * 60) + int(mins)) * 60)
@@ -78,12 +79,18 @@ class TimeCode(numbers.Real):
             return other
         elif isinstance(other, Decimal):
             return TimeCode(other)
-        elif isinstance(other, string_types) and cls.TS_RE.match(other):
-            return cls.from_tcode(other)
+        elif isinstance(other, string_types):
+            if cls.TS_RE.match(other):
+                return cls.from_tcode(other)
+            else:
+                try:
+                    return TimeCode(Decimal(other))
+                except Exception:
+                    pass
         elif isinstance(other, numbers.Number):
             return TimeCode(Decimal(str(other)))
-        else:
-            raise TypeError("Unable to convert %r to %s" % (other, cls))
+
+        raise TypeError("Unable to convert %r to %s" % (other, cls))
 
     def __repr__(self):
         return "TimeCode('%s')" % self
@@ -122,7 +129,12 @@ class TimeCode(numbers.Real):
         return math.floor(self._seconds)
 
     def __round__(self, *args):
-        return round(self._seconds, *args)
+        rslt = round(self._seconds, *args)
+        if isinstance(rslt, decimal_types):
+            # result type depends on pyhon version
+            return TimeCode(rslt)
+        else:
+            return rslt
 
     # 2ops
     def __add__(self, other):

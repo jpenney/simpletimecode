@@ -23,7 +23,7 @@ try:
     decimal_types = (Decimal, decimal.Decimal)
 except ImportError:
     from decimal import Decimal
-    decmial_types = (Decimal,)
+    decimal_types = (Decimal,)
 
 try:
     from functools import total_ordering
