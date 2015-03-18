@@ -10,6 +10,8 @@ env:
     - TOXENV=2.6-nocover
     - TOXENV=2.7,coveralls
     - TOXENV=2.7-nocover
+    - TOXENV=2.7-cdecimal,coveralls
+    - TOXENV=2.7-cdecimal-nocover
     - TOXENV=3.3,coveralls
     - TOXENV=3.3-nocover
     - TOXENV=3.4,coveralls
