@@ -20,9 +20,9 @@ def _iter_type_value(combos):
     raise StopIteration()
 
 TEST_TYPES = [float] + list(decimal_types + integer_types + string_types)
-TEST_VALUES = [0, 0.1, 1, 1.0000001, sys.maxsize, sys.maxsize + 1, -1,
-               '0', '0.1', '1', '1.0000001', '%d' % sys.maxsize,
-               '%d' % (sys.maxsize + 1), '%d' % -1]
+# 315360000 == 10 years
+TEST_VALUES = [0, 0.1, 1, 1.0000001, 315360000, -1,
+               '0', '0.1', '1', '1.0000001', '315360000', '-1']
 
 TEST_COMBOS = set(_iter_type_value(
     itertools.product(TEST_TYPES, TEST_VALUES)))

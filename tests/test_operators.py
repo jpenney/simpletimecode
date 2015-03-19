@@ -88,15 +88,15 @@ def _test_supported_1op_params():
             ops, VALUES_1OP):
         if isinstance(val, float) and oper_name in no_float:
             continue
-        if isinstance(val, string_types) and Decimal(val) == 0:
+        if isinstance(val, string_types) and Decimal('%s' % val) == 0:
             continue
-        else:
-            try:
-                oper = getattr(operator, oper_name)
-                dummy = oper(val)
-                yield oper_type, oper_name, val
-            except Exception:
-                pass
+
+        try:
+            oper = getattr(operator, oper_name)
+            dummy = oper(val)
+            yield oper_type, oper_name, val
+        except Exception:
+            pass
 
 
 def _test_supported_2op_params():
@@ -116,9 +116,15 @@ def _test_supported_2op_params():
 
             if ('pow' in oper_name and val1 == val2 and Decimal(val1) == 0):
                 xfail = True
-        if oper_type == 'logic' and oper_name.startswith('is_'):
-            # TODO: test 'is_' / 'is_not' separately
-            continue
+        if oper_type == 'logic':
+            if oper_name.startswith('is_'):
+                # TODO: test 'is_' / 'is_not' separately
+                continue
+            if (isinstance(val1, decimal_types) and
+                    isinstance(val2, decimal_types) and
+                    type(val1) != type(val2)):
+                # avoid mixing cdecimal/decimal
+                continue
         try:
             oper = getattr(operator, oper_name)
             dummy = oper(val1, val2)
