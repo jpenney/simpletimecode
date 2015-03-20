@@ -1,16 +1,17 @@
-from __future__ import absolute_import
+from __future__ import absolute_import, division
 
 import itertools
 import math
 import operator
 import sys
+import numbers
 
 import pytest
 
 from simpletimecode import TimeCode
 from simpletimecode._compat import Decimal
 
-VALS = (1, 1.159007, Decimal('1.815'), sys.maxsize + 1)
+VALS = (1, 1.159007, Decimal('1.815'), -99999999999)
 
 
 @pytest.mark.parametrize("inp, places", itertools.product(VALS, range(3)))
@@ -24,7 +25,10 @@ def test_round(inp, places):
         "round(%(inp)r, %(places)r) => %(rslt)r" % dict(
             tcval=tcval, places=places, tcrslt=tcrslt, inp=inp, rslt=rslt))
     # handle python version differences
-    assert tcrslt == rslt or tcrslt == TimeCode('%s' % rslt), msg
+    if hasattr(numbers.Real, '__round__'):
+        assert tcrslt == TimeCode('%s' % rslt), msg
+    else:
+        assert tcrslt == rslt, msg
 
 
 @pytest.mark.parametrize("inp", VALS)

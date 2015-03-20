@@ -10,22 +10,7 @@ from simpletimecode import TimeCode
 from simpletimecode._compat import (Decimal, decimal_types, integer_types,
                                     string_types)
 
-
-def _iter_type_value(combos):
-    for (typ, val) in combos:
-        try:
-            yield (typ, val, typ(val))
-        except Exception:
-            pass
-    raise StopIteration()
-
-TEST_TYPES = [float] + list(decimal_types + integer_types + string_types)
-# 315360000 == 10 years
-TEST_VALUES = [0, 0.1, 1, 1.0000001, 315360000, -1,
-               '0', '0.1', '1', '1.0000001', '315360000', '-1']
-
-TEST_COMBOS = set(_iter_type_value(
-    itertools.product(TEST_TYPES, TEST_VALUES)))
+from .common import TEST_COMBOS
 
 
 def idfn(val):
