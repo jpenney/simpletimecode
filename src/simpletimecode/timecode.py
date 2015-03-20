@@ -6,6 +6,10 @@ import operator
 import re
 
 from ._compat import Decimal, decimal_types, string_types, total_ordering
+from .utils import init_logger
+
+
+LOGGER = init_logger(__name__)
 
 
 @total_ordering
@@ -18,7 +22,7 @@ class TimeCode(numbers.Real):
     def __init__(self, num=0):
         super(TimeCode, self).__init__()
         if isinstance(num, decimal_types):
-            self._seconds = Decimal(num.as_tuple())
+            self._seconds = Decimal(tuple(num.as_tuple()))
         else:
             self._seconds = self._convert_other(num)._seconds
 
@@ -54,7 +58,13 @@ class TimeCode(numbers.Real):
         if other is NotImplemented:
             return other
         try:
-            result = operation(self._seconds, other._seconds)
+            if operation == operator.floordiv:
+                # Decimal's floordiv seems off (it floors -0.5 to 0 rather
+                # than -1), so work around that
+                result = math.floor(
+                    operator.truediv(self._seconds, other._seconds))
+            else:
+                result = operation(self._seconds, other._seconds)
         except TypeError:
             result = NotImplemented
         if result is NotImplemented:
@@ -93,7 +103,7 @@ class TimeCode(numbers.Real):
         raise TypeError("Unable to convert %r to %s" % (other, cls))
 
     def __repr__(self):
-        return "TimeCode('%s')" % self
+        return "TimeCode('%s')" % self.as_tcode()
 
     def __hash__(self):
         return hash(self._seconds)
@@ -113,11 +123,20 @@ class TimeCode(numbers.Real):
     def __trunc__(self):
         return int(self._seconds)
 
+    def _safe_compare_other(self, other):
+        if isinstance(other, decimal_types):
+            return Decimal(tuple(other.as_tuple()))
+
+        if isinstance(other, TimeCode):
+            return other.as_seconds()
+
+        return other
+
     def __eq__(self, other):
-        return self._seconds == other
+        return self._seconds == self._safe_compare_other(other)
 
     def __lt__(self, other):
-        return self._seconds < other
+        return self._seconds < self._safe_compare_other(other)
 
     def __le__(self, other):
         return self.__lt__(other) or self.__eq__(other)
@@ -129,12 +148,7 @@ class TimeCode(numbers.Real):
         return math.floor(self._seconds)
 
     def __round__(self, *args):
-        rslt = round(self._seconds, *args)
-        if isinstance(rslt, decimal_types):
-            # result type depends on pyhon version
-            return TimeCode(rslt)
-        else:
-            return rslt
+        return TimeCode(round(self._seconds, *args))
 
     # 2ops
     def __add__(self, other):

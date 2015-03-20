@@ -4,7 +4,7 @@ import sys
 
 __all__ = [
     'PY2', 'text_type', 'string_types', 'integer_types', 'Decimal',
-    'decimal_types', 'total_ordering']
+    'decimal_types', 'total_ordering', 'NullHandler']
 
 PY2 = sys.version_info[0] == 2
 
@@ -29,3 +29,13 @@ try:
     from functools import total_ordering
 except ImportError:
     from total_ordering import total_ordering
+
+try:
+    from logging import NullHandler
+except ImportError:
+    from logging import Handler as _Handler
+
+    class NullHandler(_Handler):
+
+        def emit(self, record):
+            pass
